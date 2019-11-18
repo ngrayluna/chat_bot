@@ -1,0 +1,63 @@
+/*
+
+It shows the top voted answers with their questions. Question votes and answer votes
+are also shown. The person who answered and his/her total rep is shown too.
+
+To find out more about the schema:
+https://meta.stackexchange.com/questions/2677/database-schema-documentation-for-the-public-data-dump-and-sede
+
+The StackOverflow database stores question and answers in the same “Posts” table but only questions have view data, 
+answers are linked to questions via their parent id (the answer’s parentid will be the question’s id).
+
+In order to get the answer and the question data, we join the “Posts” table to itself
+using parentid and id columns: pa.ParentID = pq.ID
+
+We give the two “Post” table instances aliases of pq and pa
+
+
+Make other queries: https://data.stackexchange.com/stackoverflow/queries
+*/
+
+
+/*Original*/
+select
+  pq.Title as Title,
+  pq.Body as Question,
+  pa.Body as Anwer,
+  pq.ViewCount as Question_ViewCount,
+  pq.Score as QuestionVotes,
+  pa.Score as AnswerVotes,
+  u.DisplayName as AnsweredBy,
+  u.Reputation as UserReputation
+from Posts pa
+join Posts pq
+  on pa.ParentId = pq.Id
+join Users u
+  on pa.OwnerUserId = u.Id
+where
+  pa.PostTypeId = 2
+and pa.Score >= 10
+
+/*Title, Question, and Answers less than 1000 words*/
+/* Also includes ViewCount*/
+select
+  pq.Title as Title,
+  pq.Body as Question,
+  pa.Body as Answer,
+  pq.Score as QuestionVotes,
+  pa.Score as AnswerVotes,
+  u.DisplayName as AnsweredBy,
+  u.Reputation as UserReputation,
+  pq.ViewCount as Question_ViewCount
+from Posts pa
+join Posts pq
+  on pa.ParentId = pq.Id
+join Users u
+  on pa.OwnerUserId = u.Id
+where
+  pa.PostTypeId = 2 
+and pa.Score >= 10
+and len(pq.Body) < 1000
+and len(pa.Body) < 1000
+and len(pq.Title) < 1000
+
